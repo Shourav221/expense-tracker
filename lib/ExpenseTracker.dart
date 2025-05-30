@@ -14,6 +14,7 @@ class ExpenseTracker extends StatefulWidget {
 }
 
 class _ExpenseTrackerState extends State<ExpenseTracker> {
+  //Expense Text field controller
   TextEditingController titleController = TextEditingController();
   TextEditingController amountController = TextEditingController();
 
@@ -21,6 +22,7 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
   TextEditingController incomeController = TextEditingController();
   TextEditingController incomeAmountController = TextEditingController();
 
+  // List for expense categories
   final List<String> categories = [
     'Food',
     'Transport',
@@ -42,7 +44,6 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
   DateTime _expenseTime = DateTime.now();
   DateTime _incomeTime = DateTime.now();
 
-
   // add Expense function
   void _addExpense(
     String title,
@@ -59,7 +60,6 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
     });
   }
 
-
   // Add Expense bottom Sheet
   void _showForm(BuildContext context) {
     String selectCategory = '';
@@ -71,6 +71,12 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Text(
+                'Add your Expense',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
               TextField(
                 controller: titleController,
                 decoration: InputDecoration(hintText: 'title'),
@@ -243,9 +249,125 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
     );
   }
 
+  // Show alert dialog
+
+  void _showAlertDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey.shade50,
+            alignment: Alignment.center,
+
+            title: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.warning, color: Colors.red),
+                SizedBox(width: 5),
+                Text(
+                  'Warning',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+
+            content: Text(
+              'If you delete all previous history, press "Confirm" otherwise press "Cancel"',
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  _deleteHistory();
+                  Navigator.pop(context);
+                },
+                child: Text('Confirm'),
+                style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                  backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                ),
+              ),
+
+              SizedBox(width: 15),
+
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Cancel'),
+                style: Theme.of(context).elevatedButtonTheme.style?.copyWith(
+                  backgroundColor: MaterialStateProperty.all(Colors.green),
+                ),
+              ),
+            ],
+          ),
+    );
+  }
+
+  // Delete function
+  void _deleteHistory() {
+    setState(() {
+      _expense.clear();
+      _income.clear();
+      totalIncome = 0;
+      totalExpense = 0;
+      totalBalance = 0;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      //Drawer button Section start
+      drawer: Drawer(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 150,
+              child: DrawerHeader(
+                margin: EdgeInsets.all(5),
+                child: Text(
+                  'Expense Tracker',
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+              ),
+            ),
+
+            ListTile(
+              leading: Text(
+                'Add Income',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              onTap: () {
+                _showIncomeForm(context);
+              },
+            ),
+
+            ListTile(
+              leading: Text(
+                'Add Expense',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              onTap: () {
+                _showForm(context);
+              },
+            ),
+
+            ListTile(
+              leading: Text(
+                'Delete history',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              onTap: () {
+                _showAlertDialog(context);
+              },
+            ),
+          ],
+        ),
+      ),
       appBar: AppBar(
         backgroundColor: Colors.blueAccent,
         centerTitle: true,
