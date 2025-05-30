@@ -1,6 +1,10 @@
-import 'package:expense_tracker/ExpenseModel.dart';
+import 'package:expense_tracker/model/ExpenseModel.dart';
+import 'package:expense_tracker/widget/expense.dart';
+import 'package:expense_tracker/widget/income.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import 'model/incomeModel.dart';
 
 class ExpenseTracker extends StatefulWidget {
   const ExpenseTracker({super.key});
@@ -13,6 +17,10 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
   TextEditingController titleController = TextEditingController();
   TextEditingController amountController = TextEditingController();
 
+  //Income text field controller
+  TextEditingController incomeController = TextEditingController();
+  TextEditingController incomeAmountController = TextEditingController();
+
   final List<String> categories = [
     'Food',
     'Transport',
@@ -20,11 +28,22 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
     'Bills',
   ];
 
+  final List<String> IncomeType = ['Salary', 'Passive', 'Others'];
+
+  final List<String> type = ['Income', 'Expense'];
+
   final List<Expense> _expense = [];
+  final List<Income> _income = [];
 
+  int _selectedIndex = 0;
   double totalExpense = 0;
+  double totalIncome = 0;
+  double totalBalance = 0;
   DateTime _expenseTime = DateTime.now();
+  DateTime _incomeTime = DateTime.now();
 
+
+  // add Expense function
   void _addExpense(
     String title,
     double amount,
@@ -36,9 +55,12 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
         Expense(title: title, amount: amount, category: category, date: date),
       );
       totalExpense += amount;
+      totalBalance -= amount;
     });
   }
 
+
+  // Add Expense bottom Sheet
   void _showForm(BuildContext context) {
     String selectCategory = '';
     showModalBottomSheet(
@@ -59,8 +81,6 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
                 controller: amountController,
                 decoration: InputDecoration(hintText: 'amount'),
               ),
-
-              SizedBox(height: 20),
 
               DropdownButtonFormField(
                 items:
@@ -115,6 +135,114 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
     );
   }
 
+  // add Income function
+
+  void _addIncome(
+    String incomeSource,
+    double incomeAmount,
+    String incomeType,
+    DateTime incomeDate,
+  ) {
+    setState(() {
+      _income.add(
+        Income(
+          incomeSource: incomeSource,
+          incomeAmount: incomeAmount,
+          incomeType: incomeType,
+          incomeDate: incomeDate,
+        ),
+      );
+    });
+    totalIncome += incomeAmount;
+    totalBalance += incomeAmount;
+  }
+
+  //Add income bottomsheet
+
+  void _showIncomeForm(BuildContext context) {
+    String incomeType = '';
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Add your Income',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+
+              SizedBox(height: 10),
+
+              TextField(
+                controller: incomeController,
+                decoration: InputDecoration(hintText: 'income source'),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: incomeAmountController,
+                decoration: InputDecoration(hintText: 'amount'),
+              ),
+
+              SizedBox(height: 10),
+
+              DropdownButtonFormField(
+                items:
+                    IncomeType.map(
+                      (item) =>
+                          DropdownMenuItem(value: item, child: Text(item)),
+                    ).toList(),
+                onChanged: (value) => incomeType = value!,
+                decoration: InputDecoration(labelText: 'Select income type'),
+              ),
+
+              SizedBox(height: 10),
+
+              //add income Elevated Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _addIncome(
+                      incomeController.text,
+                      double.parse(incomeAmountController.text),
+                      incomeType,
+                      _incomeTime,
+                    );
+                    incomeController.clear();
+                    incomeAmountController.clear();
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'Add income',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.all(20),
+                    backgroundColor: Colors.blueAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -129,65 +257,97 @@ class _ExpenseTrackerState extends State<ExpenseTracker> {
             fontSize: 30,
           ),
         ),
+
+        actions: [
+          IconButton(
+            onPressed: () {
+              _showIncomeForm(context);
+            },
+            icon: Icon(Icons.add, color: Colors.white, size: 30),
+          ),
+        ],
       ),
-      body: Column(
-        children: [
-          Center(
-            child: Card(
-              color: Colors.blueAccent.shade200,
-              margin: EdgeInsets.all(50),
-              child: Padding(
-                padding: EdgeInsets.all(50),
-                child: Text(
-                  'Total: $totalExpense',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Center(
+              child: Card(
+                color: Colors.blueAccent.shade200,
+                margin: EdgeInsets.all(50),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Text(
+                        'Total Balance: $totalBalance',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+
+                    FittedBox(
+                      child: Row(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Text(
+                              'Total Income: $totalIncome',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(width: 5),
+                          Padding(
+                            padding: EdgeInsets.all(10),
+                            child: Text(
+                              'Total Expense: $totalExpense',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-          ),
 
-          Expanded(
-            child: ListView.builder(
-              itemCount: _expense.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blueAccent,
-                      child: FittedBox(child: Text(_expense[index].category)),
-                    ),
-
-                    title: Text(
-                      _expense[index].title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-
-                    subtitle: Text(
-                      DateFormat.yMMMEd().format(_expense[index].date),
-                    ),
-
-                    trailing: Text(
-                      (_expense[index].amount.toString()),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
-                      ),
-                    ),
-                  ),
-                );
+            ToggleButtons(
+              color: Colors.black,
+              constraints: BoxConstraints(minWidth: 120, minHeight: 50),
+              fillColor: Colors.blueAccent,
+              textStyle: TextStyle(
+                color: Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              selectedColor: Colors.white,
+              children: [Text('Income'), Text('Expense')],
+              isSelected: [_selectedIndex == 0, _selectedIndex == 1],
+              onPressed: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
               },
             ),
-          ),
-        ],
+            SizedBox(height: 15),
+
+            _selectedIndex == 0
+                ? income(income: _income)
+                : expense(expense: _expense),
+          ],
+        ),
       ),
 
       floatingActionButton: FloatingActionButton(
